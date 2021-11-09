@@ -2,38 +2,45 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:insta_copy/createHeader.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
-// Class, responsible for creating states of body
+var img_formats = ['ico', 'jpeg', 'jpg', 'png'];
+
+
+/* ********************************************************
+Class, responsible for creating states of body
+******************************************************** */
 class Body extends StatefulWidget {
   @override
   createBody createState() => createBody();
 }
 
-// Class which represents the states of body
+
+/* ********************************************************
+Class which represents the states of body
+******************************************************** */
 class createBody extends State<Body> {
-  // Creates story bar
+  // Create story bar
   storyBar() => SingleChildScrollView (
       child: Container(
             height: 100,
             child: ListView(
-              itemExtent: 90, 
+              itemExtent: 105, 
               shrinkWrap: true,   
               scrollDirection: Axis.horizontal,
+              
               children: [ 
-                    Story('lib/assets/guitarist.jpg', 'myacc', true), 
-                    Story('lib/assets/rocks.jpg', 'rocky_guy'), 
-                    Story('lib/assets/no-avatar.png', '_noname_'), 
-                    Story('lib/assets/moon.jpg', 'author_art'),
-                    Story('lib/assets/moon.jpg', 'author_art'),
-                    Story('lib/assets/moon.jpg', 'author_art'),
-                    Story('lib/assets/moon.jpg', 'author_art'),
-                    Story('lib/assets/moon.jpg', 'author_art'),
-                    Story('lib/assets/moon.jpg', 'author_art'),
-                  ],
-              ),
+                Story(['myacc', 'lib/assets/guitarist.jpg'], isMe: true, child: createStory()), 
+                Story(['rocky_guy', 'lib/assets/rocks.jpg', ], child: createStory()),
+                Story(['_noname_', 'lib/assets/no-avatar.png', ], child: createStory()),
+                Story(['author_art', 'lib/assets/moon.jpg', ], child: createStory()),
+                Story(['author_art', 'lib/assets/moon.jpg', ], child: createStory()),
+                Story(['author_art', 'lib/assets/moon.jpg', ], child: createStory()),
+              ],
+            ),
           ),
-    );
+  );
+
 
   @override
   Widget build(BuildContext context) => Center(
@@ -41,24 +48,15 @@ class createBody extends State<Body> {
         child: Column( 
             children: [
               storyBar(),
+              
               Divider(color: Colors.grey),
-              Publication(
-                "myacc",
-                'lib/assets/guitarist.jpg',
-                {'lib/assets/coffee1.jpg'}, 
-                '22/09/2021', likes: 0, comments: ['Фу! Чай лучше'],
+              Publication('myacc', 'lib/assets/guitarist.jpg', {'lib/assets/coffee1.jpg'}, '22/09/2021', 0, ['Фу! Чай лучше']),
+              Publication('myacc', 'lib/assets/guitarist.jpg', {'lib/assets/coffee2.jpg', 'lib/assets/coffee3.jpg'}, 
+                          '22/09/2021', 1, ['Wow', 'Nice', 'I saw better(((']
               ),
-              Publication(
-                "myacc",
-                'lib/assets/guitarist.jpg',                
-                {'lib/assets/coffee2.jpg', 'lib/assets/coffee3.jpg'}, //height: 350, width: 440), 
-                '22/09/2021', likes: 1, comments: ['Wow', 'Nice', 'I saw better((('],
-              ),
-              Publication(
-                "author_art",
-                'lib/assets/moon.jpg',
-                {'lib/assets/coffee3.jpg'},
-                '22/09/2021', likes: 12,
+              Publication('author_art', 'lib/assets/moon.jpg', {'lib/assets/coffee3.jpg'}, '22/09/2021', 12, []),
+              Publication('author_art', 'lib/assets/moon.jpg',
+                          {'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'}, '22/09/2021', 12, []
               ),
             ],
         ),
@@ -67,39 +65,110 @@ class createBody extends State<Body> {
 }
 
 
-
-// Class, responsible for creating states of publication buttons
+/* ********************************************************
+Class, responsible for creating states of publication buttons
+******************************************************** */
 class Publication extends StatefulWidget {
-  var content;
-  var likes;
-  var date;
-  var comments;
-  var img;
   var acc_name;
+  var img;
+  var content;
+  var date;
+  var likes;
+  var comments;
 
-  Publication(this.acc_name, this.img, this.content, this.date, {this.likes, this.comments = ''});
+  Publication(this.acc_name, this.img, this.content, this.date, [this.likes=0, this.comments]);
 
   @override
   createPublication createState() => createPublication();
 }
 
-// Class which represents the states of publication buttons
-class createPublication extends State<Publication> {
+/* ********************************************************
+Class which represents the states of publication buttons
+******************************************************** */
+class createPublication extends State<Publication>{
   var icon_size = 25.0;
   var indexes = [false, false];
+  var _controller;
+
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      upperBar(widget.img), 
-      addContent(),
-      SizedBox(height: 9), 
-      lowerBar()
-    ]
-  );
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4')
+      ..initialize().then((_) {
+        setState(() {});
+      });
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        upperBar(widget.img), 
+        (contentType() == 'image')? addPhoto(): addVideo(),
+        SizedBox(height: 9), 
+        lowerBar()
+      ]
+    );
+  }
   
+  
+  contentType() {
+    var len = widget.content.elementAt(0).length;
+    var format = (widget.content.elementAt(0)).substring(len-3, len);
+    if (img_formats.contains(format))
+      return 'image';
+    return 'video';
+  }
+
   // Adding a set of photos, videos, etc. to  publication
-  addContent() => SingleChildScrollView (
+  addVideo() => SingleChildScrollView (
+      child:Container(
+        height: 350,
+        child: ListView(
+          physics: ClampingScrollPhysics(),
+          itemExtent: 360, 
+          shrinkWrap: true,   
+          scrollDirection: Axis.horizontal,
+          children: [ 
+            Scaffold(
+              body: Center(
+                child: _controller.value.isInitialized
+                    ? AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: VideoPlayer(_controller),
+                      )
+                    : Container(),
+              ),
+              floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
+              floatingActionButton: FloatingActionButton(
+                elevation: 0.0,
+                backgroundColor: Colors.transparent,
+                splashColor: Colors.transparent,
+
+                onPressed: () {
+                  setState(() {
+                    _controller.value.isPlaying
+                        ? _controller.pause()
+                        : _controller.play();
+                  });
+                },
+                child: Icon(
+                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                ),
+              ),
+              
+              
+            ),  
+          ],
+        ),
+      ),
+    );
+
+  
+  addPhoto() => SingleChildScrollView (
       child:Container(
         height: 350,
         child: ListView(
@@ -114,6 +183,7 @@ class createPublication extends State<Publication> {
         ),
       ),
     );
+
 
   // Function that converts month in string date to a number
   convertDate() {
@@ -162,7 +232,6 @@ class createPublication extends State<Publication> {
 
       actions: [
         IconButton(
-          //splashColor: Colors.transparent, 
           icon: Icon(Icons.more_vert, color: Colors.black), 
           onPressed: () => {}
         ),

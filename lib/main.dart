@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:insta_copy/App.dart';
 import 'package:insta_copy/createBody.dart';
 import 'package:insta_copy/createBottom.dart';
 import 'package:insta_copy/createHeader.dart';
+import 'package:insta_copy/videoContent.dart';
 
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: Scaffold(
-      appBar: createHeader().runAppBar(),
-      body: Body(),
-      bottomNavigationBar: Bottom(),
-    )
+    home: App(),
   )
   );
 }
